@@ -10,10 +10,8 @@ import com.google.code.morphia.Morphia;
 import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
-import com.google.code.morphia.annotations.Reference;
 import com.google.code.morphia.query.Query;
 import com.google.code.morphia.query.UpdateOperations;
-import com.mongodb.DB;
 import com.mongodb.Mongo;
 
 public class MorphiaSimpleTest{
@@ -63,7 +61,7 @@ public class MorphiaSimpleTest{
 		
 		morphia.map(sensor.getClass());
 		morphia.map(data.getClass());
-		//保存
+		//保存  会在DB中增加ClassName:包名.类名 
 		ds.save(sensor);
 		ds.save(data);
 	}
@@ -107,6 +105,16 @@ public class MorphiaSimpleTest{
 			System.out.println(data);
 		}
 	}
+	
+	@Test
+	public void findEmbedded(){
+		System.out.println("根据内嵌对象查询");
+		Query<Data> data2 = ds.createQuery(Data.class).field("sensor.observeProperty").equal("Temperature");
+		for(Data data:data2.fetch()){
+			System.out.println(data);
+		}
+	}
+	
 	
 	@Test
 	public void remove(){
