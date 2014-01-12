@@ -3,9 +3,6 @@ package gson.simple.userguie;
 import org.junit.Test;
 
 import com.google.gson.Gson;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.Mongo;
 
 public class GsonTest{
 

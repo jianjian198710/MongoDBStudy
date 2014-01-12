@@ -1,0 +1,97 @@
+4.1
+	MongoDB不支持联结操作和事务
+
+4.3.1 数据库Data目录
+	.ns用于存放DB每个集合和索引的命名空间 .ns大小固定在16MB
+	.0 .1是为DB的集合和索引预分配的空间 大小分别为64、128MB 这样做能让数据尽可能连续, 如分配更多文件,都是先前一个已分配文件的2倍
+
+4.3.2
+	固定集合 一旦达到容量上限,后续的插入会覆盖最先插入的文档
+	
+4.3.3 类型
+	(1)String 必须都为UTF-8
+	(2)BSON规定了三种数字类型:double,int,long 
+	 如果希望在Shell里将一个数字保存为整数,需要使用NumberLong()和NumberInt()显示指定 db.users.save({n:NumberLong(5)})
+	(3)日期时间 月份从0开始
+	
+5.2 查询语言
+5.2.1 查询选择器
+	(1)范围选择$lt $gt $lte $gte
+	(2)集合操作符 $in $all $nin
+		db.products.find({main_cat_id:{$in:[ObjectId("..."),ObjectId("..."),ObjectId("...")]}})
+	(3)布尔操作符 $not $ne $or $and $exists
+		求反 db.users.find(last_name:{$not:/^B/})
+		db.products.find({'detailed.color':{$exists:false}}) == db.products.find({'detailed.color':null})
+		db.products.find({'detailed.color':{$exists:true}}) == db.products.find({'detaled.color':{$ne:null}})
+	(6)数组
+		db.products.find({'tags.0':"soil"})
+		将多个条件限制在同一个子文档上 $elementMatch db.users.find({addresses:{$elementMatch:{name:'home',state:'NY'}}})
+		根据数组大小查询 db.users.find({addresses:{$size:3}})
+	(7)JavaScript
+		db.reviews.find({$where: "this.helpful_votes>3"})
+	(8)正则表达式
+		db.reviews.find({user_id:ObjectId("..."),text:/best|worst/i}) i表示忽略大小写
+		db.reviews.find({user_id:ObjectId("..."),text:{$regex:"best|worst",$option:"i"}})
+
+5.2.2 查询选项
+	(1)投影
+		db.users.find({},{username:1}) 1表示需要显示的
+		db.users.find({},{addresses:0,payment_methods:0}) 0表示不显示的
+	      分页 $slice $slice不会阻止返回其他字段
+	    db.products.find({},{reviews:{$slice:12}}) 显示头12条
+	    db.products.find({},{reviews:{$slice:-5}}) 显示最后5条
+	    db.products.find({},{reviews:{$slice:[24,12]}}) 跳过头24条,显示12条
+	(2)排序
+		db.reviews.find().sort({rating:-1})
+		db.reviews.find().sort({helpful_votes:-1,rating:-1})
+	(3)skip&limit
+		db.docs.find().skip(5000).limit(10).sort({date:-1})
+		
+5.3聚合指令
+	
+Chapter6
+6.1更新
+	(1)替换更新针对性更新
+	(2)乐观锁: 当用户试图保存他们的变更时,会在更新操作中包含一个时间戳,如果该值比最近保存的版本旧,那么不能呢让用户进行更新
+
+6.4.1
+	(1)多文档更新 将update第四个参数设成ture
+	(2)不存在时插入 upsert 也就是update第三个参数
+
+6.4.2 更新操作符
+	(1)$inc 通常原地作用在数据的磁盘位置上,只会影响指定的数据对 
+		db.users.update({username:"moe"},{$inc:{password_retires:-1}}) 是password_retires减1
+	(2)$set $unset
+		$unset在单个数组元素上使用是只是将元素设置为null,而非删除整个元素
+	数组更新操作
+		(1)$push $pushAll为数组追加值
+			db.products.update({slug:'shovel'},{$push:{'tag':'tools'}}) 添加的值是数组
+			db.products.update({slug:'shovel'},{$pushAll:{'tags':['tools','dirt','garden']}})
+		(2)$addToSet 为数组追加值,做法更细致:要添加的值如果不存在才执行添加操作
+			db.products.update({slug:'shovel'},{$addToSet:{'tag':'tools'}})
+		   $each在一个操作里向数组添加多个唯一值,必须结合$each操作符来使用$addToSet
+		    db.products.update({slug:'shovel'},{$addToSet:{'tag':{$each:['tools','dirt','steel']}}}) 仅当each中的值不在tags里的时候,才会进行添加
+		(3)$pop 删除最后添加的元素
+			db.products.update({slug:'shovel',{$pop:{'tags':1}}) 删除最后
+			db.products.update({slug:'shovel',{$pop:{'tags':-1}}) 删除第一个元素
+		(4)$pull $pullAll 指定删除哪个数组
+			db.products.update({slug:'shovel'},{$pull{'tag':'dirt'}})
+			db.products.update({slug:'shovel'},{$pullAll{'tag':['dirt','garden']}})
+
+6.4.5 并发性,原子性,隔离性
+	(1)当前的方案是允许耗时很久的操作周期地暂停,以便执行其他的读和写.在操作暂停时,它会自己停下来,释放锁,然后再恢复
+	(2)可以使用$atomic的特殊选项来避免暂停 db.reviews.update({$atomic:true},{$set:{rating:0}},false,true)
+	
+6.4.6 更新性能
+	文档更新本质分为三种:单值修改,改变文档大小和结构,重写文档
+		
+		
+	
+		
+		
+		
+		
+
+	
+	
+	

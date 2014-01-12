@@ -1,0 +1,42 @@
+7.1
+	MongoDB内部使用B树来表示索引
+
+7.2.1 创建索引
+	(1)创建唯一性索引 db.users.ensureIndex({username:1},{unique:true})
+	(2)如果集合上需要唯一性索引,通常在插入数据前先创建索引,因为在已经包含数据的集合上创建唯一性索引,会有失败的风险,因为集合可能已经有重复的键了
+		db.users.ensureIndex({username:1},{unique:true,dropDups:true}) 删除包含重复键的索引
+	(3)稀疏索引 只会出现被索引键有值的文档
+		db.products.ensureIndex({sku:1},{unique:true,sparse:true})
+	(4)多建索引 被索引字段只要包含数组,每个数组值都会在索引里有自己的位置
+	
+7.2.2 索引管理
+	(1)检查索引说明 db.users.getIndexSpecs()
+	(2)删除索引 db.users.dropIndex("zip_1")
+	(3)后台索引 db.values.ensureIndex({open:1,close:1},{background:true})
+	(4)离线索引 
+	
+7.3 查询优化
+7.3.1 识别慢查询
+	(1)使用内部剖析器 db.setProfilingLevel(2,50) 第一个参数是剖析级别,第二个是毫秒闕值
+	(2)剖析结果会保存在一个特殊的名为system.profile的固定集合里
+
+7.3.2 分析慢查询
+	(1)使用explain()
+	(2)查询首次运行时,优化器会为每个可能有效适用于该查询的索引创建查询计划,随后并行运行各个计划,nscanned值最低的计划胜出. 
+              优化器会停止那些长时间运行的计划,将胜出的计划保存下来,以便后续使用
+	(3)hint()强迫查询优化器使用某个特定索引
+		db.values.find(...).hint({close:1})
+
+7.3.3 查询模式
+	(1)单键索引: 精确匹配,排序,范围查询
+	(2)符合索引: 精确匹配,范围匹配
+	(3)覆盖索引              
+
+
+8.2 副本集
+	(1)最小的推荐副本集配置由三个节点组成,两个一等节点,一个仲裁节点
+	(2)副本集依赖于两个基础机制：oplog和"心跳"
+		oplog是一个固定集合,位于每个复制节点的local数据库里,记录了所有对数据的变更,每个oplog条目都由一个BSON时间戳进行标识
+		
+	
+	

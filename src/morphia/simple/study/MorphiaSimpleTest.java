@@ -1,5 +1,8 @@
 package morphia.simple.study;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
@@ -32,7 +35,7 @@ public class MorphiaSimpleTest{
 		ds = morphia.createDatastore(mongo, "morphia_test");
 		morphia.map(Sensor.class);
 		morphia.map(Data.class);
-		
+		morphia.map(SensorCluster.class);
 	}
 	
 	@After
@@ -121,6 +124,28 @@ public class MorphiaSimpleTest{
 		ds.delete(ds.createQuery(Sensor.class));
 		ds.delete(ds.createQuery(Data.class));
 	}
+	
+	/*
+	 * 测试带List的对象映射,List以数组形势保存
+	 */
+	@Test
+	public void insertList(){
+		Sensor sensor1 = new Sensor();
+		Sensor sensor2 = new Sensor();
+		SensorCluster sc1 = new SensorCluster();
+		
+		sensor1.setSensorId("sensor01");
+		sensor1.setObserveProperty("temperature");
+		sensor2.setSensorId("sensor02");
+		sensor2.setObserveProperty("humidity");
+		List<Sensor> sensors = new ArrayList<Sensor>();
+		sensors.add(sensor1);
+		sensors.add(sensor2);
+		
+		sc1.setSensors(sensors);
+		sc1.setClusterId("sc1");
+		ds.save(sc1);
+	}
 }
 
 //指定到映射的Collection
@@ -171,5 +196,24 @@ class Sensor {
 	
 	public String toString(){
 		return "sensorId: "+sensorId+", observeProperty: "+observeProperty;
+	}
+}
+
+@Entity("sensorClusters")
+class SensorCluster{
+	@Id
+	private String clusterId;
+	private List<Sensor> sensors;
+	public String getClusterId() {
+		return clusterId;
+	}
+	public void setClusterId(String clusterId) {
+		this.clusterId = clusterId;
+	}
+	public List<Sensor> getSensors() {
+		return sensors;
+	}
+	public void setSensors(List<Sensor> sensors) {
+		this.sensors = sensors;
 	}
 }
